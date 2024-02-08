@@ -1,11 +1,11 @@
-d03a61017837c231fc60bfd3c2e09ab8 *DESCRIPTION
+2ad30bd9b808122eb1890a9d4d6d099d *DESCRIPTION
 a3a1c853e2e3aa67ba36342bb4218bc7 *LICENSE
 b10b0438ac32674a8e766059023cf015 *NAMESPACE
 6dfc735f7cc26d3c79f3cb4ee3595f8b *R/HMC_configuration.R
-a4d7b32a4c102475ece0dfae5b5c63d4 *R/HMC_samplers.R
+83a169b7c3b9b65922d98d6b29d48afb *R/HMC_samplers.R
 d2f76ad6e582ee78786dfa3208897e55 *inst/CITATION
 f539080f0f68c70212583907268dc4c6 *inst/COPYRIGHTS
-4daa37d9a35d77850e9b1b45f31c2fbf *inst/NEWS.md
+b636c1edf65a7c8d36c5c17f5f476938 *inst/NEWS.md
 e6766867432569db4172c7e2efe4b31c *man/addHMC.Rd
 ac8620f90e34294b481b72a2a8792123 *man/buildHMC.Rd
 f1297f9513d88001da4fc1a58c66a6b1 *man/configureHMC.Rd
@@ -14,5 +14,5 @@ d9155c8bdcfaaad3e6a269c3dce6f54c *man/sampler_NUTS.Rd
 f1a5501842e998b35d78f13866f5a641 *man/sampler_NUTS_classic.Rd
 3d275abbc4531b94441fa77447e01009 *man/stateNL_NUTS.Rd
 b204d777bea658e6c72cdb10d61e8eb2 *man/treebranchNL_NUTS.Rd
-9ef59de02012980582d2c318bef02b93 *tests/testthat/test-HMC.R
-9f5c528489b9f33e6db7b94fd4696e39 *tests/testthat/test-tuning.R
+215a55be36e7570466f0ac1499c5e86d *tests/testthat/test-HMC.R
+d6833c1389d479453ac91a6cece9e4df *tests/testthat/test-tuning.R

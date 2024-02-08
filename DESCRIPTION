@@ -1,8 +1,8 @@
 Package: nimbleHMC
 Title: Hamiltonian Monte Carlo and Other Gradient-Based MCMC Sampling
         Algorithms for 'nimble'
-Version: 0.2.0
-Date: 2023-09-11
+Version: 0.2.1
+Date: 2024-02-08
 Authors@R: c(person("Daniel", "Turek", role = c("aut", "cre"), email = "danielturek@gmail.com"),
 	     person("Perry", "de Valpine", role = "aut"),
 	     person("Christopher", "Paciorek", role = "aut"))
@@ -14,12 +14,11 @@ Suggests: testthat
 License: BSD_3_clause + file LICENSE | GPL (>= 2)
 Copyright: See COPYRIGHTS file.
 Encoding: UTF-8
-LazyData: false
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 NeedsCompilation: no
-Packaged: 2023-09-12 00:36:52 UTC; dturek
+Packaged: 2024-02-08 22:54:18 UTC; dturek
 Author: Daniel Turek [aut, cre],
   Perry de Valpine [aut],
   Christopher Paciorek [aut]
 Repository: CRAN
-Date/Publication: 2023-09-12 02:20:02 UTC
+Date/Publication: 2024-02-08 23:10:02 UTC
