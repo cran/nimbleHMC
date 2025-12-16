@@ -130,6 +130,8 @@ addHMC <- function(conf, target = character(), type = 'NUTS', control = list(), 
 #' # Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 #' # samples <- runMCMC(Cmcmc)
 configureHMC <- function(model, nodes = character(), type = 'NUTS', control = list(), print = TRUE, ...) {
+    if(!is.model(model)) stop('\'model\' argument must be a nimble model object',  call. = FALSE)
+    if(!isTRUE(model$modelDef[['buildDerivs']])) stop('must set buildDerivs = TRUE when building model',  call. = FALSE)
     nodesProvided <- !identical(nodes, character())
     if(nodesProvided) {
         nodes <- model$expandNodeNames(nodes)
@@ -155,7 +157,7 @@ configureHMC <- function(model, nodes = character(), type = 'NUTS', control = li
 #'
 #' Build an MCMC algorithm which applies HMC sampling to continuous-valued dimensions
 #' 
-#' @param model A nimble model, as returned by `nimbleModel`
+#' @param model A nimble model, as returned by `nimbleModel`.  Alternatively, an MCMC configuration object, as returned by either `configureHMC` or `configureHMC`.  See details.
 #' @param nodes A character vector of stochastic node names to be sampled. If an empty character vector is provided (the default), then all stochastic non-data nodes will be sampled.  An HMC sampler will be applied to all continuous-valued non-data nodes, and nimble's default sampler will be assigned for all discrete-valued nodes.
 #' @param type A character string specifying the type of HMC sampling to apply, either "NUTS" or "NUTS_classic".  See `help(NUTS)` or `help(NUTS_classic)` for details of each sampler.  The default sampler type is "NUTS".
 #' @param control Optional named list of control parameters to be passed as the `control` argument to the HMC sampler.  See `help(NUTS)` or `help(NUTS_classic)` for details of the control list elements accepted by each sampler.
@@ -166,7 +168,9 @@ configureHMC <- function(model, nodes = character(), type = 'NUTS', control = li
 #'
 #' This is the most direct way to create an MCMC algorithm using HMC sampling in nimble.  This will create a compilable, executable MCMC algorithm, with HMC sampling assigned to all continuous-valued model dimensions, and nimble's default sampler assigned to all discrete-valued dimensions.  The `nodes` argument can be used to control which model nodes are assigned samplers.  Use this if you don't otherwise need to modify the MCMC configuration.
 #'
-#' Either the `NUTS_classic` or the `NUTS` samplin can be applied.  Both implement variants of No-U-Turn HMC sampling, however the `NUTS` sampler uses more modern adapatation techniques. See `help(NUTS)` or `help(NUTS_classic)` for details.
+#' Either the `NUTS_classic` or the `NUTS` sampling can be applied, which is controled by the `type` argument.  Both implement variants of No-U-Turn HMC sampling, however the `NUTS` sampler uses more modern adapatation techniques. See `help(NUTS)` or `help(NUTS_classic)` for details.
+#'
+#' Note that when an MCMC configuration object is provided as the `model` argument, then an executable MCMC algorithm is generated using the MCMC configuration that was provided - regardless of whether or not it specifies any HMC samplers.
 #'
 #' @export
 #'
@@ -199,7 +203,11 @@ configureHMC <- function(model, nodes = character(), type = 'NUTS', control = li
 #' # Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 #' # samples <- runMCMC(Cmcmc)
 buildHMC <- function(model, nodes = character(), type = 'NUTS', control = list(), print = TRUE, ...) {
-    conf <- configureHMC(model, nodes, type, control, print, includeConfGetUnsampledNodes = FALSE, ...)
+    if(is.model(model)) {
+        conf <- configureHMC(model, nodes, type, control, print, includeConfGetUnsampledNodes = FALSE, ...)
+    } else if(inherits(model, 'MCMCconf')) {
+        conf <- model
+    } else stop('\'model\' argument must be either a nimble model or an MCMC configuration object',  call. = FALSE)
     Rmcmc <- suppressMessages(buildMCMC(conf))
     return(Rmcmc)
 }
@@ -248,8 +256,10 @@ buildHMC <- function(model, nodes = character(), type = 'NUTS', control = list()
 #' @param samplesAsCodaMCMC Logical argument.  If \code{TRUE}, then a \code{coda} \code{mcmc} object is returned instead of an R matrix of samples, or when \code{nchains > 1} a \code{coda} \code{mcmc.list} object is returned containing \code{nchains} \code{mcmc} objects.  This argument is only used when \code{samples} is \code{TRUE}.  Default value is \code{FALSE}.  See details.
 #' 
 #' @param summary Logical argument.  When \code{TRUE}, summary statistics for the posterior samples of each parameter are also returned, for each MCMC chain.  This may be returned in addition to the posterior samples themselves.  Default value is \code{FALSE}.  See details.
-#'z
+#' 
 #' @param WAIC Logical argument.  When \code{TRUE}, the WAIC (Watanabe, 2010) of the model is calculated and returned.  If multiple chains are run, then a single WAIC value is calculated using the posterior samples from all chains.  Default value is \code{FALSE}. Note that the version of WAIC used is the default WAIC conditional on random effects/latent states and without any grouping of data nodes. See \code{help(waic)} for more details.
+#' 
+#' @param userEnv Environment in which if-then-else statements in model code will be evaluated if needed information not found in \code{constants}; intended primarily for internal use only.
 #' 
 #' @return A list is returned with named elements depending on the arguments, unless only one among samples, summary, and WAIC are requested, in which case only that element is returned.  These elements may include \code{samples}, \code{summary}, and \code{WAIC}.  When \code{nchains = 1}, posterior samples are returned as a single matrix, and summary statistics as a single matrix.  When \code{nchains > 1}, posterior samples are returned as a list of matrices, one matrix for each chain, and summary statistics are returned as a list containing \code{nchains+1} matrices: one matrix corresponding to each chain, and the final element providing a summary of all chains, combined.  If \code{samplesAsCodaMCMC} is \code{TRUE}, then posterior samples are provided as \code{coda} \code{mcmc} and \code{mcmc.list} objects.  When \code{WAIC} is \code{TRUE}, a WAIC summary object is returned.
 #'
@@ -312,11 +322,12 @@ nimbleHMC <- function(code,
                       samples = TRUE,
                       samplesAsCodaMCMC = FALSE,
                       summary = FALSE,
-                      WAIC = FALSE) {
+                      WAIC = FALSE,
+                      userEnv = parent.frame()) {
     if(missing(code) && missing(model)) stop('must provide either code or model argument')
     if(!samples && !summary && !WAIC) stop('no output specified, use samples = TRUE, summary = TRUE, or WAIC = TRUE')
     if(!missing(code) && inherits(code, 'modelBaseClass')) model <- code   ## let's handle it, if model object is provided as un-named first argument
-    Rmodel <- mcmc_createModelObject(model, inits, nchains, setSeed, code, constants, data, dimensions, check, buildDerivs = TRUE)
+    Rmodel <- mcmc_createModelObject(model, inits, nchains, setSeed, code, constants, data, dimensions, check, buildDerivs = TRUE, userEnv = userEnv)
     Rmcmc <- buildHMC(Rmodel, type = type, monitors = monitors, thin = thin, enableWAIC = WAIC, print = FALSE)
     compiledList <- compileNimble(Rmodel, Rmcmc)    ## only one compileNimble() call
     Cmcmc <- compiledList$Rmcmc
